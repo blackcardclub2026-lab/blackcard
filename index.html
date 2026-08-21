@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Black Card</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+  :root {
+    --ink: #0a0908;
+    --panel: #131110;
+    --panel-2: #1a1714;
+    --hairline: rgba(201, 162, 39, 0.18);
+    --gold: #c9a227;
+    --gold-bright: #e9c96a;
+    --gold-dim: #8a6f22;
+    --paper: #f3ead0;
+    --muted: #8a8478;
+    --err: #b5533f;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+  }
+
+  body {
+    background:
+      linear-gradient(180deg, rgba(10,9,8,0.55) 0%, rgba(10,9,8,0.75) 45%, var(--ink) 85%),
+      url('assets/background.jpg') center top / cover no-repeat fixed,
+      var(--ink);
+  }
+
+  .stage {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Emblem ---------- */
+  .emblem-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 28px;
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(.2,.8,.2,1) 0.05s forwards;
+  }
+
+  .logo-img {
+    width: 220px;
+    max-width: 72%;
+    height: auto;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+  }
+
+  /* ---------- Copy ---------- */
+  .lede {
+    text-align: center;
+    padding: 0 6px 28px;
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(.2,.8,.2,1) 0.15s forwards;
+  }
+  .lede h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 8px;
+    color: var(--paper);
+  }
+  .lede p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* ---------- Form ---------- */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(.2,.8,.2,1) 0.25s forwards;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+  }
+
+  .field input[type="text"],
+  .field input[type="date"] {
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 15px 14px;
+    font-size: 16px;
+    color: var(--paper);
+    font-family: 'Manrope', sans-serif;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    width: 100%;
+    color-scheme: dark;
+  }
+  .field input[type="text"]::placeholder { color: #5c574c; }
+  .field input[type="text"]:focus,
+  .field input[type="date"]:focus {
+    border-color: var(--gold);
+    background: var(--panel-2);
+  }
+  .field.invalid input { border-color: var(--err); }
+  .field .hint {
+    font-size: 12px;
+    color: var(--err);
+    min-height: 14px;
+    display: none;
+  }
+  .field.invalid .hint { display: block; }
+
+  /* Telegram identity readout */
+  .identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 13px 14px;
+  }
+  .identity .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(201,162,39,0.15);
+  }
+  .identity .who {
+    font-size: 14px;
+    color: var(--paper);
+  }
+  .identity .who span {
+    color: var(--gold-bright);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--hairline), transparent);
+    margin: 4px 0;
+  }
+
+  .submit {
+    margin-top: 4px;
+    border: none;
+    border-radius: 4px;
+    padding: 17px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a1400;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(201,162,39,0.18);
+  }
+  .submit:active { transform: scale(0.98); }
+  .submit:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .fineprint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  .consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 13px 14px;
+    cursor: pointer;
+  }
+  .consent input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 19px;
+    height: 19px;
+    min-width: 19px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    background: var(--panel-2);
+    margin-top: 1px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .consent input[type="checkbox"]:checked {
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border-color: var(--gold);
+  }
+  .consent input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid #1a1400;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .consent .consent-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--paper);
+  }
+  .consent .consent-text a {
+    color: var(--gold-bright);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .consent.invalid {
+    border-color: var(--err);
+  }
+
+  .rules-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 50;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .rules-overlay.show {
+    display: flex;
+  }
+  .rules-sheet {
+    width: 100%;
+    max-width: 460px;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 16px 16px 0 0;
+    padding: 24px 22px 28px;
+  }
+  .rules-sheet h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--gold-bright);
+    margin: 0 0 16px;
+    text-align: center;
+  }
+  .rules-sheet ol {
+    margin: 0 0 18px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rules-sheet li {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--paper);
+  }
+  .rules-sheet .rules-note {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+    margin-bottom: 18px;
+  }
+  .rules-close {
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    padding: 14px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #1a1400;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    cursor: pointer;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Success state ---------- */
+  .success {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .success.show { display: flex; }
+  .success .seal {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    animation: seal-in 0.5s cubic-bezier(.2,.8,.2,1);
+  }
+  .success .seal svg { width: 28px; height: 28px; }
+  .success h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    color: var(--gold-bright);
+  }
+  .success p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 300px;
+  }
+  @keyframes seal-in {
+    from { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+    to { opacity: 1; transform: scale(1) rotate(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <div class="emblem-wrap">
+    <img class="logo-img" src="assets/logo.png" alt="Black Card Club">
+  </div>
+
+  <div class="lede">
+    <h1>Заявка на вступление</h1>
+    <p>Оставьте контакты — мы свяжемся с вами лично для подтверждения статуса гостя.</p>
+  </div>
+
+  <form id="form">
+
+    <div class="identity" id="identity" style="display:none;">
+      <div class="dot"></div>
+      <div class="who">Telegram: <span id="tg-username">—</span></div>
+    </div>
+
+    <div class="field" id="name-field">
+      <label for="name">Никнейм</label>
+      <input type="text" id="name" placeholder="Например, BlackAce" autocomplete="off">
+      <div class="hint">Введите никнейм, минимум 2 символа</div>
+    </div>
+
+    <div class="field" id="date-field">
+      <label for="reg-date">Дата регистрации</label>
+      <input type="date" id="reg-date">
+      <div class="hint">Выберите дату</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <label class="consent" id="consent-field" for="consent-check">
+      <input type="checkbox" id="consent-check">
+      <span class="consent-text">Я согласен(на) с <a href="#" id="rules-link">правилами клуба</a></span>
+    </label>
+
+    <button type="submit" class="submit" id="submit-btn" disabled>Продолжить</button>
+
+    <div class="fineprint">После никнейма бот попросит подтвердить номер телефона в чате — одной кнопкой.<br>Данные нигде публично не отображаются.</div>
+  </form>
+
+  <div class="rules-overlay" id="rules-overlay">
+    <div class="rules-sheet">
+      <h3>Правила для гостей</h3>
+      <ol>
+        <li>Покер проводится исключительно в развлекательных целях.</li>
+        <li>Денежные ставки запрещены.</li>
+        <li>Денежные выигрыши запрещены.</li>
+        <li>Призы и материальные вознаграждения за результат игры отсутствуют.</li>
+        <li>Игровые фишки используются только как игровой инвентарь.</li>
+        <li>Фишки не имеют денежной стоимости.</li>
+        <li>Покупка и продажа игровых фишек запрещены.</li>
+        <li>Обмен игровых фишек на денежные средства запрещён.</li>
+        <li>Расчёты между гостями по результатам игры запрещены.</li>
+        <li>Администрация вправе прекратить игру при нарушении настоящих правил.</li>
+        <li>Посещая клуб, вы подтверждаете, что ознакомлены и согласны с настоящими правилами.</li>
+      </ol>
+      <div class="rules-note">
+        В целях обеспечения безопасности гостей, сотрудников и имущества на территории BLACK CARD ведётся видеонаблюдение. На отдельных участках осуществляется видеозапись. Посещая клуб, гость подтверждает, что уведомлён о ведении видеонаблюдения.
+      </div>
+      <button type="button" class="rules-close" id="rules-close">Понятно</button>
+    </div>
+  </div>
+
+  <div class="success" id="success">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 12.5L9.5 18L20 6" stroke="#e9c96a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2>Почти готово</h2>
+    <p>Заявка отправлена. Вернитесь в чат с ботом — там придёт кнопка «Отправить номер телефона», нажмите её, чтобы завершить заявку.</p>
+  </div>
+
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  let tgUser = null;
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    try { tg.setHeaderColor('#0a0908'); } catch(e) {}
+    try { tg.setBackgroundColor('#0a0908'); } catch(e) {}
+
+    tgUser = tg.initDataUnsafe?.user || null;
+    if (tgUser) {
+      document.getElementById('identity').style.display = 'flex';
+      document.getElementById('tg-username').textContent = tgUser.username ? '@' + tgUser.username : (tgUser.first_name || 'гость');
+    }
+  }
+
+  // По умолчанию — сегодняшняя дата, и запрещаем выбор дат в прошлом
+  const dateInput = document.getElementById('reg-date');
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  dateInput.min = todayStr;
+  dateInput.value = todayStr;
+
+  const nameInput = document.getElementById('name');
+  const nameField = document.getElementById('name-field');
+  const dateField = document.getElementById('date-field');
+  const consentCheck = document.getElementById('consent-check');
+  const consentField = document.getElementById('consent-field');
+  const submitBtn = document.getElementById('submit-btn');
+  const form = document.getElementById('form');
+
+  function checkReady() {
+    const nameOk = nameInput.value.trim().length >= 2;
+    const dateOk = !!dateInput.value;
+    const consentOk = consentCheck.checked;
+    submitBtn.disabled = !(nameOk && dateOk && consentOk);
+  }
+
+  nameInput.addEventListener('input', () => {
+    nameField.classList.remove('invalid');
+    checkReady();
+  });
+  dateInput.addEventListener('input', () => {
+    dateField.classList.remove('invalid');
+    checkReady();
+  });
+  consentCheck.addEventListener('change', () => {
+    consentField.classList.remove('invalid');
+    checkReady();
+  });
+
+  const rulesOverlay = document.getElementById('rules-overlay');
+  document.getElementById('rules-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    rulesOverlay.classList.add('show');
+  });
+  document.getElementById('rules-close').addEventListener('click', () => {
+    rulesOverlay.classList.remove('show');
+  });
+  rulesOverlay.addEventListener('click', (e) => {
+    if (e.target === rulesOverlay) rulesOverlay.classList.remove('show');
+  });
+
+  checkReady();
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const regDate = dateInput.value;
+
+    if (name.length < 2) {
+      nameField.classList.add('invalid');
+      return;
+    }
+    if (!regDate) {
+      dateField.classList.add('invalid');
+      return;
+    }
+    if (!consentCheck.checked) {
+      consentField.classList.add('invalid');
+      return;
+    }
+
+    const payload = {
+      name: name,
+      reg_date: regDate,
+      username: tgUser?.username || '',
+      tg_id: tgUser?.id || ''
+    };
+
+    document.getElementById('stage').querySelectorAll('.emblem-wrap, .lede, form').forEach(el => el.style.display = 'none');
+    document.getElementById('success').classList.add('show');
+
+    if (tg && tg.sendData) {
+      tg.sendData(JSON.stringify(payload));
+      setTimeout(() => tg.close(), 1600);
+    }
+  });
+</script>
+
+</body>
+</html>
